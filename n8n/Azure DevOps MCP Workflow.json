@@ -1,0 +1,631 @@
+{
+  "name": "Codex Integration Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "azure",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1120,
+        992
+      ],
+      "id": "339c4d3d-b2f8-4f1b-8b65-419058a792d4",
+      "name": "Webhook",
+      "webhookId": "b24f428b-0a42-42a3-9dc8-0ea49dcc5f1d"
+    },
+    {
+      "parameters": {
+        "jsCode": "const changes = $input.first().json.changes || [];\n\nconst files = changes\n  .filter(\n    (c) =>\n      c.item.gitObjectType === \"blob\" &&\n      c.item.path.match(/\\.(ts|tsx|js|jsx)$/),\n  )\n  .map((c) => ({\n    path: c.item.path,\n    commitId: c.item.commitId,\n    baseCommit: $input.first().json.baseCommit,\n    targetCommit: $input.first().json.targetCommit,\n  }));\n\nreturn { files };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        800
+      ],
+      "id": "63c27054-f5ce-41bc-ab98-89abcdee7348",
+      "name": "Filter Blob & .(ts,js,...)"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "files",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        800
+      ],
+      "id": "db2489ba-d5b4-4a57-a918-cf4b1f0cd08d",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "url": "=https://dev.azure.com/appvity/{{ $json.body.resource.repository.project.name }}/_apis/git/repositories/{{ $json.body.resource.repository.id }}/diffs/commits\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "baseVersion",
+              "value": "={{ $json.body.resource.lastMergeTargetCommit.commitId}}"
+            },
+            {
+              "name": "baseVersionType",
+              "value": "commit"
+            },
+            {
+              "name": "targetVersion",
+              "value": "={{ $json.body.resource.lastMergeSourceCommit.commitId }}"
+            },
+            {
+              "name": "targetVersionType",
+              "value": "commit"
+            },
+            {
+              "name": "api-version",
+              "value": "7.1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -912,
+        800
+      ],
+      "id": "0bbcbe59-3c20-4d86-9f73-d7e23016a7a8",
+      "name": "GET commit detail",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "gGALBKPsax2GiJBS",
+          "name": "Dev Azure Personal Accesstoken"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://dev.azure.com/appvity/{{ $('Webhook').item.json.body.resource.repository.project.name }}/_apis/git/repositories/{{ $('Webhook').item.json.body.resource.repository.id }}/items\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "path",
+              "value": "={{ $json.path }}"
+            },
+            {
+              "name": "versionType",
+              "value": "commit"
+            },
+            {
+              "name": "version",
+              "value": "={{ $json.baseCommit }}"
+            },
+            {
+              "name": "includeContent",
+              "value": "true"
+            },
+            {
+              "name": "api-version",
+              "value": "7.1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -272,
+        704
+      ],
+      "id": "8a77a6fd-1ace-440f-83f3-9d68de62f531",
+      "name": "GET base commit",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "gGALBKPsax2GiJBS",
+          "name": "Dev Azure Personal Accesstoken"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://dev.azure.com/appvity/{{ $('Webhook').item.json.body.resource.repository.project.name }}/_apis/git/repositories/{{ $('Webhook').item.json.body.resource.repository.id }}/items\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "path",
+              "value": "={{ $json.path }}"
+            },
+            {
+              "name": "versionType",
+              "value": "commit"
+            },
+            {
+              "name": "version",
+              "value": "={{ $json.targetCommit }}"
+            },
+            {
+              "name": "includeContent",
+              "value": "true"
+            },
+            {
+              "name": "api-version",
+              "value": "7.1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -272,
+        912
+      ],
+      "id": "346cbc0f-9999-4d52-8194-310b4751fc27",
+      "name": "GET target commit",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "gGALBKPsax2GiJBS",
+          "name": "Dev Azure Personal Accesstoken"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -80,
+        800
+      ],
+      "id": "0b256fdb-8d71-4ee5-9321-46ce97ce90fe",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "url": "=https://dev.azure.com/appvity/{{ $json.body.resource.repository.project.name }}/_apis/git/repositories/{{ $json.body.resource.repository.id }}/pullRequests/17642/commits\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "api-version",
+              "value": "7.1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -912,
+        1216
+      ],
+      "id": "73d6d515-17b3-45db-9ae7-05db612a59f9",
+      "name": "GET All commit of pull request",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "gGALBKPsax2GiJBS",
+          "name": "Dev Azure Personal Accesstoken"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const commits = $input.first().json.value || [];\n\nlet commitIds = commits.map((c) => c.commitId).join(\", \");\n\nreturn { commitIds };\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        1216
+      ],
+      "id": "ffeec7a8-49ea-48e3-9978-3fcf2b78bd41",
+      "name": "Get commit Ids string"
+    },
+    {
+      "parameters": {
+        "command": "=codex exec \"Review commits with id {{ $json.commitIds }}\" --json"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        1216
+      ],
+      "id": "486059bf-ae9e-4819-afd5-c2dfa3420b6c",
+      "name": "Codex Prompt Review"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Codex Webhook').item.json.body.recipients.emails.join(', ') }}",
+        "subject": "Codex Integration Workflow",
+        "message": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        1120
+      ],
+      "id": "522d1f9f-8c3b-41d2-8fff-6e2ad1b197ef",
+      "name": "Gmail Send Message1",
+      "webhookId": "f7d495dd-de7d-4202-b749-216292bf4092",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": {
+          "__rl": true,
+          "value": "05432cd9-d2b3-4e44-8212-28405f17eba4",
+          "mode": "list",
+          "cachedResultName": "RnD Discussion"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "19:KhGX9jZOR_wDXqvq-EtbXw4gnvZYSAnr6ZDhQpNiaBw1@thread.tacv2",
+          "mode": "list",
+          "cachedResultName": "General",
+          "cachedResultUrl": "https://teams.cloud.microsoft/l/channel/19%3AKhGX9jZOR_wDXqvq-EtbXw4gnvZYSAnr6ZDhQpNiaBw1%40thread.tacv2/R%26D%20Discussion?groupId=05432cd9-d2b3-4e44-8212-28405f17eba4&tenantId=bfe53760-c13f-4271-9e14-60cf6e1727b8&allowXTenantAccess=True&ngc=True"
+        },
+        "contentType": "html",
+        "message": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [
+        128,
+        1312
+      ],
+      "id": "4849b887-58c4-4d34-9d68-035d7a7faa61",
+      "name": "MS Teams Send Message1",
+      "webhookId": "6925ef6e-2c5e-4081-a3d7-fe9dc41df2ea",
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "xCcT0ghyfDAGW2XT",
+          "name": "Microsoft Teams account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a6516d53-241d-4ea0-a018-1a4a8f0c4ce9",
+              "name": "stdout",
+              "value": "={{ $json.stdout.split(\"\\n\").filter(Boolean).map(JSON.parse).find(item => item.item?.type === \"agent_message\").item.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -304,
+        1216
+      ],
+      "id": "c19be0b7-8954-4dd4-8a0a-36ffa3dc90a2",
+      "name": "Mapping Data1"
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.stdout }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        1216
+      ],
+      "id": "ab6f2315-cd99-405b-be8b-1f57b4d9ca5f",
+      "name": "Markdown1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -704,
+        1920
+      ],
+      "id": "b123bba9-40a9-4ba2-8ede-7414250fa8f2",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -704,
+        2112
+      ],
+      "id": "ae31e1b8-16bf-4a1b-bc91-bde3ebfaf844",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "tlInm9dTwDWEsPs5",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -880,
+        1920
+      ],
+      "id": "cfa5f468-22cf-4e8d-bda1-6dbb52d2bd5e",
+      "name": "When chat message received",
+      "webhookId": "b1c877bd-7b7c-4423-a937-8442b17a0691"
+    },
+    {
+      "parameters": {
+        "path": "mcp"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        1920
+      ],
+      "id": "37401ea1-c334-432c-9583-d633794cca71",
+      "name": "MCP Server Trigger",
+      "webhookId": "b4dfaa53-b04e-401e-a277-031b1055facc"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        -16,
+        2080
+      ],
+      "id": "2f2b8235-07f5-45c1-a79b-c2f9a5a4a6c0",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "content": "## Azure Devops - Trigger Webhook create pull request",
+        "height": 880,
+        "width": 2032
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1408,
+        656
+      ],
+      "typeVersion": 1,
+      "id": "ffdc563a-cb33-4243-b9bc-24e8a4472f1a",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "R&D AI Agent & MCP",
+        "height": 576,
+        "width": 1216
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1008,
+        1776
+      ],
+      "typeVersion": 1,
+      "id": "c8370fbf-da32-4d41-8842-06128f68cc7c",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "GET All commit of pull request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Blob & .(ts,js,...)": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "GET base commit",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET target commit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET commit detail": {
+      "main": [
+        [
+          {
+            "node": "Filter Blob & .(ts,js,...)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET base commit": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET target commit": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "GET All commit of pull request": {
+      "main": [
+        [
+          {
+            "node": "Get commit Ids string",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get commit Ids string": {
+      "main": [
+        [
+          {
+            "node": "Codex Prompt Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapping Data1": {
+      "main": [
+        [
+          {
+            "node": "Markdown1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown1": {
+      "main": [
+        [
+          {
+            "node": "MS Teams Send Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Codex Prompt Review": {
+      "main": [
+        [
+          {
+            "node": "Mapping Data1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "51c0a405-dde9-4d48-8024-9abb21588bee",
+  "meta": {
+    "instanceId": "c13b440218b847f7821fed95bf11d64c57eeca4d6dbc006fe9a665382ef752b4"
+  },
+  "id": "aghShleDAbcVkL1u",
+  "tags": []
+}
