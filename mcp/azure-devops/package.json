@@ -2,25 +2,31 @@
   "name": "azure-devops",
   "version": "1.0.0",
   "description": "",
-  "scripts": {
-    "build": "tsc && chmod 755 build/index.js"
-  },
-  "files": [
-    "build"
-  ],
-  "bin": {
-    "weather": "./build/index.js"
-  },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
+  "main": "index.mjs",
+  "prettier": {
+    "useTabs": false,
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": true,
+    "singleQuote": true,
+    "printWidth": 180
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.mjs"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "cors": "^2.8.5",
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "prettier": "^3.7.4"
   }
 }
