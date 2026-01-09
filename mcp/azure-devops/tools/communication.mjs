@@ -7,9 +7,11 @@ export const communicationTools = [
     inputSchema: z.object({
       name: z.string(),
     }),
-    handler: async ({ name }) => ({
-      content: [{ type: 'text', text: `Xin chào ${name} from MCP Server!` }],
-    }),
+    handler: async ({ name }) => {
+      return {
+        content: [{ type: 'text', text: `Xin chào ${name} from MCP Server!` }],
+      };
+    },
   },
   {
     name: 'farewell',
