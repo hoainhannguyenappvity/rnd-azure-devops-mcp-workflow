@@ -16,17 +16,17 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.mjs"
+    "start": "node index.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.1",
-    "zod": "^3.25.76",
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "cors": "^2.8.5",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
-    "typescript": "^5.9.3",
-    "prettier": "^3.7.4"
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3"
   }
 }
