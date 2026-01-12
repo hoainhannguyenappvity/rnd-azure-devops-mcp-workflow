@@ -22,6 +22,7 @@
     "@modelcontextprotocol/sdk": "^1.25.2",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
+    "diff": "^8.0.2",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "zod": "^3.25.76"

@@ -14,11 +14,8 @@ export const pullRequestTools = [
     }),
     handler: async ({ organization, projectName, repositoryId, pullRequestId, apiVersion }) => {
       const allCommits = await getAllCommits(organization, projectName, repositoryId, pullRequestId, apiVersion);
-
       if (allCommits?.length === 0) return { content: [{ type: 'text', text: 'No commits found for this pull request.' }] };
-
       const commitIds = allCommits?.map((commit) => commit.commitId).join(', ');
-
       return {
         content: [
           {
