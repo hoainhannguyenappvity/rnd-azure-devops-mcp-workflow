@@ -23,4 +23,14 @@ export const communicationTools = [
       content: [{ type: 'text', text: `Tạm biệt ${name} from MCP Server!` }],
     }),
   },
+  {
+    name: 'ping',
+    description: 'Ping status MCP Server',
+    inputSchema: z.object({}).optional(),
+    handler: async () => {
+      return {
+        content: [{ type: 'text', text: `Ping thành công from MCP Server!` }],
+      };
+    },
+  },
 ];
