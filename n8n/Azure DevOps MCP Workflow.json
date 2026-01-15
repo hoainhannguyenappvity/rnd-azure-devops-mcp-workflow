@@ -10,7 +10,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -3040,
+        -3280,
         -2112
       ],
       "id": "339c4d3d-b2f8-4f1b-8b65-419058a792d4",
@@ -27,8 +27,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.2,
       "position": [
-        -2144,
-        -2032
+        -1968,
+        -1936
       ],
       "id": "e1e98e8f-443d-433b-a7fc-6240f66a8282",
       "name": "Gmail Send Message",
@@ -58,8 +58,8 @@
       "type": "n8n-nodes-base.microsoftTeams",
       "typeVersion": 2,
       "position": [
-        -2144,
-        -1840
+        -1968,
+        -1744
       ],
       "id": "263d46b4-662e-4d83-a17a-d5ae1b893dab",
       "name": "MS Teams Send Message",
@@ -78,7 +78,7 @@
             {
               "id": "a6516d53-241d-4ea0-a018-1a4a8f0c4ce9",
               "name": "stdout",
-              "value": "={{ $json.stdout}}",
+              "value": "={{ $json.agent_message.item.text }}",
               "type": "string"
             }
           ]
@@ -88,8 +88,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -2560,
-        -1936
+        -2320,
+        -1840
       ],
       "id": "f1477a8f-87fb-4066-a13a-8040a0ed8780",
       "name": "Mapping Data"
@@ -103,40 +103,24 @@
       "type": "n8n-nodes-base.markdown",
       "typeVersion": 1,
       "position": [
-        -2352,
-        -1936
+        -2160,
+        -1840
       ],
       "id": "79ad6da2-9948-4d71-a468-a9b1b599fec1",
       "name": "Markdown"
     },
     {
       "parameters": {
-        "command": "=codex exec \"You are a senior software engineer acting as a pull request reviewer.\n\nA new pull request has been created in Azure DevOps with the following information:\n\n- Project name: {{ $json.body.resource.repository.project.name }}\n- Repository ID: {{ $json.body.resource.repository.id }}\n- Pull Request ID: {{ $json.body.resource.pullRequestId }}\n\nStep 1:\nCall the MCP tool \"review\" using the pull request information above to fetch the commit IDs for this pull request.\n\nStep 2:\nAfter you receive the commit IDs, review the commits with those IDs and provide:\n- A summary of the changes\n- Potential issues or risks\n- Suggestions for improvement\" --json"
+        "command": "=codex exec \"Please help me review code changes between two remote Git branches. Follow these steps: 1. First, fetch the latest changes from the remote repository:   git fetch origin 2. Then, show the diff between the master branch and feature_branch:   git diff {{ $json.targetRefName }} {{ $json.sourceRefName }} 3. After reviewing the changes, please provide:   - A summary of what was modified (files changed, additions, deletions)   - Key functional changes and their purpose   - Potential issues or concerns (bugs, security, performance, breaking changes)   - Code quality observations (best practices, maintainability, readability)   - Testing recommendations   - Overall recommendation (approve, request changes, or needs discussion) 4. Please be thorough but concise in your analysis. Only result field text of type agent_message, markdown only.\" --json --sandbox=danger-full-access"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        -2752,
-        -1936
+        -2672,
+        -1840
       ],
       "id": "fb00ff94-74fa-4a71-a90e-f226a8cdad85",
       "name": "Codex Prompt & MCP Server"
-    },
-    {
-      "parameters": {
-        "toolDescription": "Makes an HTTP request ping to server and returns the response pong",
-        "method": "POST",
-        "url": "https://7fcaab5fa135.ngrok-free.app/mcp/tool/ping",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequestTool",
-      "typeVersion": 4.3,
-      "position": [
-        -2416,
-        -2224
-      ],
-      "id": "1db9849b-a3b2-4290-9f56-eb866acf71f4",
-      "name": "HTTP Ping Server"
     },
     {
       "parameters": {
@@ -156,8 +140,10 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are a senior software engineer acting as a pull request reviewer.\n\nStep 1:\nGet the full diff information for all commits in a pull request.\n\nStep 2:\nYou are given the code diffs generated from multiple commits in a pull request.\nAnalyze each file’s diff and provide:\n\n- A clear summary of the changes\n- Any potential bugs, security issues, or performance risks\n- Actionable suggestions for improving code quality, readability, or maintainability\n\nBase your analysis solely on the provided diffs, and then return markdown",
-        "options": {}
+        "text": "=",
+        "options": {
+          "systemMessage": "=Please help me review code changes between two remote Git branches. You must call the MCP tool \"azure-devops-review-pull-request\" exactly once using the provided pull request information. After reviewing the changes, please provide:   - A summary of what was modified (files changed, additions, deletions)   - Key functional changes and their purpose   - Potential issues or concerns (bugs, security, performance, breaking changes)   - Code quality observations (best practices, maintainability, readability)   - Testing recommendations   - Overall recommendation (approve, request changes, or needs discussion). Do not call any other tools. Stop immediately after responding."
+        }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
@@ -172,8 +158,9 @@
       "parameters": {
         "model": {
           "__rl": true,
+          "value": "gpt-5.2-codex",
           "mode": "list",
-          "value": "gpt-4.1-mini"
+          "cachedResultName": "gpt-5.2-codex"
         },
         "builtInTools": {},
         "options": {}
@@ -181,8 +168,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -2752,
-        -2224
+        -2768,
+        -2208
       ],
       "id": "7a224aac-5f50-4cb5-a4b5-3f718f4d469e",
       "name": "OpenAI Chat Model",
@@ -192,6 +179,94 @@
           "name": "OpenAi account"
         }
       }
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": {
+          "__rl": true,
+          "value": "05432cd9-d2b3-4e44-8212-28405f17eba4",
+          "mode": "list",
+          "cachedResultName": "RnD Discussion"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "19:KhGX9jZOR_wDXqvq-EtbXw4gnvZYSAnr6ZDhQpNiaBw1@thread.tacv2",
+          "mode": "list",
+          "cachedResultName": "General",
+          "cachedResultUrl": "https://teams.cloud.microsoft/l/channel/19%3AKhGX9jZOR_wDXqvq-EtbXw4gnvZYSAnr6ZDhQpNiaBw1%40thread.tacv2/R%26D%20Discussion?groupId=05432cd9-d2b3-4e44-8212-28405f17eba4&tenantId=bfe53760-c13f-4271-9e14-60cf6e1727b8&allowXTenantAccess=True&ngc=True"
+        },
+        "contentType": "html",
+        "message": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [
+        -2176,
+        -2416
+      ],
+      "id": "47f0ce7f-7cd4-432b-9a7b-27b7cd5bf1ea",
+      "name": "MS Teams Send Message Report",
+      "webhookId": "6925ef6e-2c5e-4081-a3d7-fe9dc41df2ea",
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "xCcT0ghyfDAGW2XT",
+          "name": "Microsoft Teams account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -3856,
+        -2464
+      ],
+      "id": "dc50a3fa-2f89-4d60-9296-8eff394a6664",
+      "name": "When chat message received",
+      "webhookId": "02a02654-36b9-4c74-9b58-168cff46a0f9"
+    },
+    {
+      "parameters": {
+        "operation": "executeTool",
+        "toolName": "azure-devops-review-pull-request",
+        "toolParameters": "={\n  \"projectName\": \"{{ $json.body.resource.repository.project.name }}\",\n  \"repositoryId\": \"{{ $json.body.resource.repository.id }}\",\n  \"baseVersion\": \"{{ $json.body.resource.lastMergeTargetCommit.commitId }}\",\n  \"targetVersion\": \"{{ $json.body.resource.lastMergeSourceCommit.commitId }}\"\n} "
+      },
+      "type": "n8n-nodes-mcp.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        -2496,
+        -2208
+      ],
+      "id": "5121a5fc-bc94-42a8-8a2d-1e054f48894c",
+      "name": "MCP Client",
+      "credentials": {
+        "mcpClientApi": {
+          "id": "wa1tpTKxdPEOrugt",
+          "name": "MCP Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Makes an HTTP request ping to server and returns the response pong",
+        "method": "POST",
+        "url": "https://7fcaab5fa135.ngrok-free.app/mcp/tool/ping",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        -3744,
+        -2224
+      ],
+      "id": "1db9849b-a3b2-4290-9f56-eb866acf71f4",
+      "name": "HTTP Ping Server",
+      "disabled": true
     },
     {
       "parameters": {
@@ -231,47 +306,70 @@
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.3,
       "position": [
-        -2592,
+        -3888,
         -2224
       ],
       "id": "b31b3f57-a157-42bf-945d-a8257d0ec124",
-      "name": "Get Diffs Commit"
+      "name": "Get Diffs Commit",
+      "disabled": true
     },
     {
       "parameters": {
-        "resource": "channelMessage",
-        "teamId": {
-          "__rl": true,
-          "value": "05432cd9-d2b3-4e44-8212-28405f17eba4",
-          "mode": "list",
-          "cachedResultName": "RnD Discussion"
-        },
-        "channelId": {
-          "__rl": true,
-          "value": "19:KhGX9jZOR_wDXqvq-EtbXw4gnvZYSAnr6ZDhQpNiaBw1@thread.tacv2",
-          "mode": "list",
-          "cachedResultName": "General",
-          "cachedResultUrl": "https://teams.cloud.microsoft/l/channel/19%3AKhGX9jZOR_wDXqvq-EtbXw4gnvZYSAnr6ZDhQpNiaBw1%40thread.tacv2/R%26D%20Discussion?groupId=05432cd9-d2b3-4e44-8212-28405f17eba4&tenantId=bfe53760-c13f-4271-9e14-60cf6e1727b8&allowXTenantAccess=True&ngc=True"
-        },
-        "contentType": "html",
-        "message": "={{ $json.data }}",
-        "options": {}
+        "content": "## Example: Run n8n & codex local",
+        "height": 480,
+        "width": 1184,
+        "color": 4
       },
-      "type": "n8n-nodes-base.microsoftTeams",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2928,
+        -2000
+      ],
+      "typeVersion": 1,
+      "id": "cd8f2d01-4bf5-493f-bda1-f61ca9a14da5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Example: Use OpenAI model & Host n8n",
+        "height": 464,
+        "width": 1184,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2928,
+        -2480
+      ],
+      "typeVersion": 1,
+      "id": "34365d3c-ebcb-42fc-a2a8-0b62e81e9e69",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sourceRefName = $('Webhook').first().json.body.resource.sourceRefName;\nconst targetRefName = $('Webhook').first().json.body.resource.targetRefName;\n\n// 1. Định nghĩa các tiền tố dưới dạng biến\nconst OLD_PREFIX = \"refs/heads/\";\nconst NEW_PREFIX = \"origin/\";\n\n// 2. Tách riêng phần tên Branch (loại bỏ refs/heads/)\nconst sourceBranchPath = sourceRefName.replace(OLD_PREFIX, \"\"); // Kết quả: \"POV/dev_RnD\"\nconst targetBranchPath = targetRefName.replace(OLD_PREFIX, \"\"); // Kết quả: \"POV/master\"\n\n// 3. Ghép lại với tiền tố mới\nconst result = {\n  sourceRefName: `${NEW_PREFIX}${sourceBranchPath}`,\n  targetRefName: `${NEW_PREFIX}${targetBranchPath}`\n};\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2160,
-        -2416
+        -2848,
+        -1840
       ],
-      "id": "47f0ce7f-7cd4-432b-9a7b-27b7cd5bf1ea",
-      "name": "MS Teams Send Message Report",
-      "webhookId": "6925ef6e-2c5e-4081-a3d7-fe9dc41df2ea",
-      "credentials": {
-        "microsoftTeamsOAuth2Api": {
-          "id": "xCcT0ghyfDAGW2XT",
-          "name": "Microsoft Teams account"
-        }
-      }
+      "id": "e84722e1-a848-45b4-a1a6-177a2bdac338",
+      "name": "Map Path Git"
+    },
+    {
+      "parameters": {
+        "jsCode": "const value = $input.first().json.stdout.split(\"\\n\");\n\nconst valueMap = value.map(v => JSON.parse(v))\n\nlet agent_message = valueMap.find(i => i?.item?.type === 'agent_message')\n\nreturn { agent_message}\n  "
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2496,
+        -1840
+      ],
+      "id": "b9f04d41-bb1e-4498-ade5-673210d9be09",
+      "name": "Get Agent Message"
     }
   ],
   "pinData": {
@@ -279,18 +377,18 @@
       {
         "json": {
           "headers": {
-            "host": "bd5090427465.ngrok-free.app",
+            "host": "c0cd7b9e122f.ngrok-free.app",
             "user-agent": "VSServices/20.266.36811.6 (w3wp.exe)",
-            "content-length": "5823",
+            "content-length": "5836",
             "content-type": "application/json; charset=utf-8",
             "expect": "100-continue",
             "request-context": "appId=cid-v1:7f7403c4-9954-4161-b128-2daca1d9e098",
-            "request-id": "|44a4cfc36180367d47d7091b6d1f909a.c4226f3119bc221d.",
-            "traceparent": "00-44a4cfc36180367d47d7091b6d1f909a-c4226f3119bc221d-00",
+            "request-id": "|ce768500682a387fd3edc8bac89a6ea6.559a01400ee21e08.",
+            "traceparent": "00-ce768500682a387fd3edc8bac89a6ea6-559a01400ee21e08-00",
             "x-forwarded-for": "20.37.194.0",
-            "x-forwarded-host": "bd5090427465.ngrok-free.app",
+            "x-forwarded-host": "c0cd7b9e122f.ngrok-free.app",
             "x-forwarded-proto": "https",
-            "x-vss-activityid": "cbcafeff-8de8-0001-b1bd-4206576fdc01",
+            "x-vss-activityid": "cd097f9a-730f-0000-76e6-dc05576fdc01",
             "x-vss-subscriptionid": "6bfb744d-2a9c-43dc-91dc-12495cd27f60",
             "accept-encoding": "gzip"
           },
@@ -298,19 +396,19 @@
           "query": {},
           "body": {
             "subscriptionId": "6bfb744d-2a9c-43dc-91dc-12495cd27f60",
-            "notificationId": 25,
-            "id": "ca38c2b7-4677-4cec-b355-401de80d8b0d",
+            "notificationId": 30,
+            "id": "89315d8c-6d61-4af9-b1e2-2292c1d89df0",
             "eventType": "git.pullrequest.created",
             "publisherId": "tfs",
             "message": {
-              "text": "Thien Lam created pull request 17752 (Create func getHoursNumber()) in eTravelRequest-FrontEnd\r\nhttps://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/",
-              "html": "Thien Lam created <a href=\"https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17752\">pull request 17752</a> (Create func getHoursNumber()) in <a href=\"https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/\">eTravelRequest-FrontEnd</a>",
-              "markdown": "Thien Lam created [pull request 17752](https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17752) (Create func getHoursNumber()) in [eTravelRequest-FrontEnd](https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/)"
+              "text": "Thien Lam created pull request 17789 (\t Create func getHoursNumber()) in eTravelRequest-FrontEnd\r\nhttps://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/",
+              "html": "Thien Lam created <a href=\"https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17789\">pull request 17789</a> (\t Create func getHoursNumber()) in <a href=\"https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/\">eTravelRequest-FrontEnd</a>",
+              "markdown": "Thien Lam created [pull request 17789](https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17789) (\t Create func getHoursNumber()) in [eTravelRequest-FrontEnd](https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/)"
             },
             "detailedMessage": {
-              "text": "Thien Lam created pull request 17752 (Create func getHoursNumber()) in eTravelRequest-FrontEnd\r\nhttps://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/",
-              "html": "Thien Lam created <a href=\"https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17752\">pull request 17752</a> (Create func getHoursNumber()) in <a href=\"https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/\">eTravelRequest-FrontEnd</a>",
-              "markdown": "Thien Lam created [pull request 17752](https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17752) (Create func getHoursNumber()) in [eTravelRequest-FrontEnd](https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/)"
+              "text": "Thien Lam created pull request 17789 (\t Create func getHoursNumber()) in eTravelRequest-FrontEnd\r\nhttps://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/",
+              "html": "Thien Lam created <a href=\"https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17789\">pull request 17789</a> (\t Create func getHoursNumber()) in <a href=\"https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/\">eTravelRequest-FrontEnd</a>",
+              "markdown": "Thien Lam created [pull request 17789](https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17789) (\t Create func getHoursNumber()) in [eTravelRequest-FrontEnd](https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/)"
             },
             "resource": {
               "repository": {
@@ -327,15 +425,15 @@
                   "visibility": "private",
                   "lastUpdateTime": "2022-11-18T08:18:57.23Z"
                 },
-                "size": 9571605,
+                "size": 9632627,
                 "remoteUrl": "https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd",
                 "sshUrl": "appvity@vs-ssh.visualstudio.com:v3/appvity/Appvity%20Teams%20Project/eTravelRequest-FrontEnd",
                 "webUrl": "https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd",
                 "isDisabled": false,
                 "isInMaintenance": false
               },
-              "pullRequestId": 17752,
-              "codeReviewId": 17752,
+              "pullRequestId": 17789,
+              "codeReviewId": 17789,
               "status": "active",
               "createdBy": {
                 "displayName": "Thien Lam",
@@ -350,48 +448,48 @@
                 "imageUrl": "https://appvity.visualstudio.com/_api/_common/identityImage?id=4e68276c-a96b-6609-af77-b2f26a3084a7",
                 "descriptor": "aad.NGU2ODI3NmMtYTk2Yi03NjA5LWFmNzctYjJmMjZhMzA4NGE3"
               },
-              "creationDate": "2026-01-12T06:11:15.9370155Z",
-              "title": "Create func getHoursNumber()",
+              "creationDate": "2026-01-15T03:28:32.2971996Z",
+              "title": "\t Create func getHoursNumber()",
               "sourceRefName": "refs/heads/POV/dev_RnD",
-              "targetRefName": "refs/heads/POV/master",
+              "targetRefName": "refs/heads/POV/QA",
               "mergeStatus": "succeeded",
               "isDraft": false,
-              "mergeId": "c44d5b55-bc49-4705-9aa7-91780fa29280",
+              "mergeId": "4190e038-4963-4ee7-b37a-edb54127430e",
               "lastMergeSourceCommit": {
-                "commitId": "81825c8bd1dbd7c4e8059ebf94befd67f97a954c",
-                "url": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/commits/81825c8bd1dbd7c4e8059ebf94befd67f97a954c"
+                "commitId": "988e3d98209088db37c8db90932e3380e393f182",
+                "url": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/commits/988e3d98209088db37c8db90932e3380e393f182"
               },
               "lastMergeTargetCommit": {
-                "commitId": "7ed8f7c10a3a77b2472294b2e249d5734dd9d519",
-                "url": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/commits/7ed8f7c10a3a77b2472294b2e249d5734dd9d519"
+                "commitId": "e30a12b8adc9ee1b8e1e61598b24bd562ffcbbcd",
+                "url": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/commits/e30a12b8adc9ee1b8e1e61598b24bd562ffcbbcd"
               },
               "lastMergeCommit": {
-                "commitId": "7ee85bad2afb27f41e9fd39f50625dd9e3e7cd5a",
+                "commitId": "25ab36c43570b2178f9209b0be7645e636b49236",
                 "author": {
                   "name": "Thien Lam",
                   "email": "thien.lam@appvity.com",
-                  "date": "2026-01-12T06:11:16Z"
+                  "date": "2026-01-15T03:28:32Z"
                 },
                 "committer": {
                   "name": "Thien Lam",
                   "email": "thien.lam@appvity.com",
-                  "date": "2026-01-12T06:11:16Z"
+                  "date": "2026-01-15T03:28:32Z"
                 },
-                "comment": "Merge pull request 17752 from POV/dev_RnD into POV/master",
-                "url": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/commits/7ee85bad2afb27f41e9fd39f50625dd9e3e7cd5a"
+                "comment": "Merge pull request 17789 from POV/dev_RnD into POV/QA",
+                "url": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/commits/25ab36c43570b2178f9209b0be7645e636b49236"
               },
               "reviewers": [],
-              "url": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/pullRequests/17752",
+              "url": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/pullRequests/17789",
               "_links": {
                 "web": {
-                  "href": "https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17752"
+                  "href": "https://appvity.visualstudio.com/Appvity%20Teams%20Project/_git/eTravelRequest-FrontEnd/pullrequest/17789"
                 },
                 "statuses": {
-                  "href": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/pullRequests/17752/statuses"
+                  "href": "https://appvity.visualstudio.com/6d856357-8dd8-494d-8316-9142b55938f4/_apis/git/repositories/4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8/pullRequests/17789/statuses"
                 }
               },
               "supportsIterations": true,
-              "artifactId": "vstfs:///Git/PullRequestId/6d856357-8dd8-494d-8316-9142b55938f4%2f4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8%2f17752"
+              "artifactId": "vstfs:///Git/PullRequestId/6d856357-8dd8-494d-8316-9142b55938f4%2f4dec7e02-8bd1-49a7-bd7c-1c21d719f9c8%2f17789"
             },
             "resourceVersion": "1.0",
             "resourceContainers": {
@@ -408,7 +506,7 @@
                 "baseUrl": "https://appvity.visualstudio.com/"
               }
             },
-            "createdDate": "2026-01-12T06:11:22.7005016Z"
+            "createdDate": "2026-01-15T03:28:39.1088594Z"
           },
           "webhookUrl": "http://localhost:5678/webhook-test/azure",
           "executionMode": "test"
@@ -421,7 +519,7 @@
       "main": [
         [
           {
-            "node": "AI Agent",
+            "node": "Map Path Git",
             "type": "main",
             "index": 0
           }
@@ -454,19 +552,8 @@
       "main": [
         [
           {
-            "node": "Mapping Data",
+            "node": "Get Agent Message",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP Ping Server": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
             "index": 0
           }
         ]
@@ -505,12 +592,49 @@
         ]
       ]
     },
-    "Get Diffs Commit": {
+    "When chat message received": {
+      "main": [
+        []
+      ]
+    },
+    "MCP Client": {
       "ai_tool": [
         [
           {
             "node": "AI Agent",
             "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Ping Server": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Get Diffs Commit": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Map Path Git": {
+      "main": [
+        [
+          {
+            "node": "Codex Prompt & MCP Server",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Agent Message": {
+      "main": [
+        [
+          {
+            "node": "Mapping Data",
+            "type": "main",
             "index": 0
           }
         ]
@@ -522,7 +646,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "fbe66004-a535-40c6-a195-6653167a20a3",
+  "versionId": "be85b158-e719-4772-9cf8-4277d918ed55",
   "meta": {
     "instanceId": "c13b440218b847f7821fed95bf11d64c57eeca4d6dbc006fe9a665382ef752b4"
   },
